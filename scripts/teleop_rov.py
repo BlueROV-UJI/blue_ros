@@ -65,9 +65,11 @@ class TeleopRov(object):
               if command['var'] == 'stop':
                 for i, key in enumerate(self.command_mapping.keys()):
                   self.command_mapping[key] = self.base_channel[i]
+              else:
+                self.command_mapping[command['var']] = command['val']
               return
-      # x, y, z, roll, pitch, yaw = 1500, 1500, 1500, 1500, 1500, 1500
-      # self.command_mapping = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
+      x, y, z, roll, pitch, yaw = 1500, 1500, 1500, 1500, 1500, 1500
+      self.command_mapping = {'x': x, 'y': y, 'z': z, 'roll': roll, 'pitch': pitch, 'yaw': yaw}
   
   def timer_callback(self, event):
     msg = OverrideRCIn()
