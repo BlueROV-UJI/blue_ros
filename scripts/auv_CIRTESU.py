@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 from sensor_msgs.msg import Imu, Image, CompressedImage
 from mavros_msgs.msg import StatusText, VFR_HUD
