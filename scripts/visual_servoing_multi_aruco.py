@@ -38,45 +38,57 @@ class ArucoServoing:
 
         rospy.Subscriber("/blue_rov1/CompressedImage", CompressedImage, self.image_callback)
         self.cmd_vel_publisher = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
-        # self.goal_points = np.array([[509.5, 257.5], [107.5, 257.0]])
-        # self.goal_points = np.array([[526., 192.], [567., 192.], [567., 232.], [526., 232.]])
-        middle_left_goal = np.array(
-            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
-        middle_right_goal = np.array(
-            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
-        upper_left_goal = np.array(
-            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
-        upper_right_goal = np.array(
-            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
+        #74
+        middle_left_goal = np.array([[[122., 207.],
+        [169., 207.],
+        [169., 253.],
+        [122., 253.]]])
+        #75
+        middle_right_goal = np.array([[[481., 207.],
+        [527., 207.],
+        [527., 253.],
+        [481., 253.]]])
+        #76
+        upper_left_goal = np.array([[[480.,  20.],
+        [527.,  20.],
+        [527.,  67.],
+        [481.,  67.]]])
+        #77
+        upper_right_goal = np.array([[[122.,  20.],
+        [169.,  20.],
+        [169.,  67.],
+        [122.,  67.]]])
+        #100
         center_goal = np.array(
-            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
-        self.goals_dict = {'middle_left': {'id': '74', 'pos': middle_left_goal},
-                           'middle_right': {'id': '75', 'pos': middle_right_goal},
-                           'upper_right': {'id': '76', 'pos': upper_left_goal},
-                           'upper_left': {'id': '77', 'pos': upper_right_goal},
-                           'center': {'id': '100', 'pos': center_goal}}
+            [[280., 189.], [341., 189.], [341., 251.], [280., 251.]])
+        self.goals_dict = {'74' : middle_left_goal,
+                           '75' : middle_right_goal,
+                           '76' : upper_left_goal,
+                           '77' : upper_right_goal,
+                           '100': center_goal}
         self.current_goal = None
-        # self.goal_points = np.array([[75., 240.] , [129., 240.], [129., 294.],  [75.,294.]])
-        # self.goal_points = np.array([[509.5, 257.5]])
 
     def detect_marker(self, image):
-        self.detected_markers_dict = {k:[] for k in self.goals_dict.keys()}
+        detected_markers_dict = {k:None for k in self.goals_dict.keys()}
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         parameters = aruco.DetectorParameters_create()
-        corners, ids, _ = aruco.detectMarkers(gray, self.aruco_dict, parameters=parameters)
-        frame_markers = aruco.drawDetectedMarkers(image, corners, ids)
-        corner_key_found = None
-        if len(corners) != 0:
-            for id, corner in zip(ids, corners):
-                if len(corner) == 4:
-                    self.detected_markers_dict[str(id[0])].append(corner)
-                    corner_key_found = str(id[0])
+        all_arucos_corners, ids, _ = aruco.detectMarkers(gray, self.aruco_dict, parameters=parameters)
+        print("ids = {}".format(ids))
+        print("all_arucos_corners = {}".format(all_arucos_corners))
+        frame_markers = aruco.drawDetectedMarkers(image, all_arucos_corners, ids)
+        aruco_key_found = None
+        if len(all_arucos_corners) != 0:
+            for id, one_aruco_corners in zip(ids, all_arucos_corners):
+                if len(one_aruco_corners) == 1:
+                    detected_markers_dict[str(id[0])] = one_aruco_corners
+                    aruco_key_found = str(id[0])
                     break
-        if corner_key_found is None:
+        if aruco_key_found is None:
             return None, None, None
-        corners = self.detected_markers_dict[corner_key_found]
-        self.current_goal = self.goals_dict[corner_key_found]['pos']
-        rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners, 0.1, self.camera_matrix, self.dist_coeffs)
+        single_aruco_corners = detected_markers_dict[aruco_key_found]
+        #Selecting the goal to track
+        self.current_goal = self.goals_dict[aruco_key_found]
+        rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(single_aruco_corners, 0.1, self.camera_matrix, self.dist_coeffs)
         _ = cv2.drawFrameAxes(image, self.camera_matrix, self.dist_coeffs, rvec, tvec, 0.1)
         rvec = np.array(rvec).flatten()
         self.quat = self.transform.rodrigues_to_quaternion(rvec)
@@ -88,7 +100,7 @@ class ArucoServoing:
         cv2.waitKey(3)
 
         aruco_centers = []
-        for corner in corners:
+        for corner in [single_aruco_corners]:
             mid = [0, 0]
             #Computing the middle point of a square using two opposite corner's points
             for point in corner:
@@ -99,7 +111,7 @@ class ArucoServoing:
             cv2.circle(frame_markers, (int(mid[0]), int(mid[1])), 5, (0, 0, 255), -1) #-1 means filled circle
         cv2.imshow("frame_markers", frame_markers)
         cv2.waitKey(3)
-        return frame_markers, aruco_centers, corners
+        return frame_markers, aruco_centers, single_aruco_corners
 
     def image_callback(self, image_msg):
         if self.compressed_flag:
@@ -116,9 +128,14 @@ class ArucoServoing:
         
         self.image_height = cv_image.shape[0]
         self.image_width = cv_image.shape[1]
+        cv2.imshow("image", cv_image)
+        cv2.waitKey(3)
         frame_markers, aruco_centers, aruco_corners = self.detect_marker(cv_image)
+        print("a7a")
+        print("aruco_corners = {}".format(aruco_corners))
+        print("aruco_centers = {}".format(aruco_centers))
         #Check if aruco is detected:
-        if len(aruco_centers) == 0:
+        if aruco_corners is None:
             self.cmd_vel_publisher.publish(Twist(Vector3(0, 0, 0), Vector3(0, 0, 0)))
             return
         else:
@@ -132,7 +149,7 @@ class ArucoServoing:
             # exit()
             velocity = self.velocity_controller(current_points, goal_points)
             vel_x, vel_y, vel_z, vel_roll, vel_pitch, vel_yaw = velocity[0], velocity[1], velocity[2], velocity[3], velocity[4], velocity[5]
-            vel_x, vel_y, vel_z = 0, 0, 0
+            # vel_x, vel_y, vel_z = 0, 0, 0
             self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
 
 
