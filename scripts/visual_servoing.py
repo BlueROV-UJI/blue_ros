@@ -41,8 +41,8 @@ class ArucoServoing:
         self.cmd_vel_publisher = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
         # self.goal_points = np.array([[509.5, 257.5], [107.5, 257.0]])
         # self.goal_points = np.array([[526., 192.], [567., 192.], [567., 232.], [526., 232.]])
-        # self.goal_points = np.array([[[89., 239.], [126., 239.], [126., 275.], [90., 275.]]])
-        self.goal_points = np.array([[75., 240.] , [129., 240.], [129., 294.],  [75.,294.]])
+        self.goal_points = np.array([[[89., 239.], [126., 239.], [126., 275.], [90., 275.]]])
+        # self.goal_points = np.array([[75., 240.] , [129., 240.], [129., 294.],  [75.,294.]])
         # self.goal_points = np.array([[509.5, 257.5]])
 
     def detect_marker(self, image):
@@ -125,7 +125,7 @@ class ArucoServoing:
             velocity = self.velocity_controller(current_points, goal_points)
             vel_x, vel_y, vel_z, vel_roll, vel_pitch, vel_yaw = velocity[0], velocity[1], velocity[2], velocity[3], velocity[4], velocity[5]
 
-            self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(vel_y), float(-vel_z)), Vector3(0, 0, 0)))
+            self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
 
 
      
