@@ -48,10 +48,13 @@ class ArucoServoing:
             [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
         upper_right_goal = np.array(
             [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
+        center_goal = np.array(
+            [[89., 239.], [126., 239.], [126., 275.], [90., 275.]])
         self.goals_dict = {'middle_left': {'id': '74', 'pos': middle_left_goal},
                            'middle_right': {'id': '75', 'pos': middle_right_goal},
                            'upper_left': {'id': '76', 'pos': upper_left_goal},
-                           'upper_right': {'id': '77', 'pos': upper_right_goal}}
+                           'upper_right': {'id': '77', 'pos': upper_right_goal},
+                           'center': {'id': '77', 'pos': center_goal}}
         self.current_goal = None
         # self.goal_points = np.array([[75., 240.] , [129., 240.], [129., 294.],  [75.,294.]])
         # self.goal_points = np.array([[509.5, 257.5]])
