@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- roscore automatically started by roslaunch -->
+
+  <!-- start mavlink node -->
+  <!-- px4.launch already run by ROV -->
+  <!-- <include file="$(find bluerov)/launch/apm.launch" /> -->
+
+  <!-- start joy_node -->
+    <group ns="br5"> 
+    <arg name="ns" default="br5"/>
+    <node respawn="true" pkg="joy" type="joy_node" name="joy_node" output="screen">
+      <param name="dev" value="/dev/input/js0" type="string"/>
+    </node> 
+
+    <!-- start telexbox to convert joystick values into vel -->
+    <node pkg="autonomous_rov" type="teleop_xbox" name="teleop_xbox" output="screen">
+    </node>  
+
+    <arg name="arg1" default="--device /dev/ttyUSB0"/>  
+
+    
+  <!-- rosbag for listener_vel_control.py file -->
+    
+    <!-- controller velocity (surge = 0/heave = 1/yaw = 2)-->
+     <arg name="controller_label" default= "0"/>
+     
+    <!-- Pinger Distance -->
+    <param name="controller/surge/kp" value= "0.5"/>
+    <param name="controller/surge/ki" value= "0.0"/>
+    <param name="controller/surge/kd" value= "0.0"/>
+    <!-- sway -->
+     <param name="controller/sway/kp" value= "0.006"/>
+     <param name="controller/sway/ki" value= "0.0"/>
+     <param name="controller/sway/kd" value= "0.02"/>
+    <!-- surge_vel -->
+     <param name="controller/surge_vel/kp" value= "0.006"/>
+     <param name="controller/surge_vel/ki" value= "0.0"/>
+     <param name="controller/surge_vel/kd" value= "0.02"/>
+    <!-- heave -->
+     <param name="controller/depth/g" value= "0"/>
+     <param name="controller/depth/kp" value= "20"/>
+     <param name="controller/depth/ki" value= "0"/>
+     <param name="controller/depth/kd" value= "0"/>
+    <!-- heading -->
+     <param name="controller/yaw/kp" value= "0.045"/>
+     <param name="controller/yaw/ki" value= "0"/>
+     <param name="controller/yaw/kd" value= "0"/>
+     <!-- heading -->
+     <param name="controller/pitch/kp" value= "0.045"/>
+     <param name="controller/pitch/ki" value= "0"/>
+     <param name="controller/pitch/kd" value= "0"/>
+
+    <node respawn="true" pkg="autonomous_rov" type="yaw_controller.py" name="yaw_controller" output="screen">
+    </node>
+
+    <node respawn="true" pkg="autonomous_rov" type="pitch_controller.py" name="pitch_controller" output="screen">
+    </node>
+
+    <node respawn="true" pkg="autonomous_rov" type="depth_controller.py" name="depth_controller" output="screen">
+    </node>
+    
+    <node respawn="true" pkg="autonomous_rov" type="surge_controller.py" name="surge_controller" output="screen">
+    </node>
+    
+    <node respawn="true" pkg="autonomous_rov" type="sway_controller.py" name="sway_controller" output="screen">
+    </node>
+
+    <!-- <node respawn="true" pkg="autonomous_rov" type="surge_vel_controller.py" name="surge_vel_controller" output="screen">
+    </node> -->
+
+    <node pkg="autonomous_rov" type="listener_control_new.py" name="listener" output="screen">
+    </node>
+    <node pkg="autonomous_rov" type="blob_tracker_mir.py" name="blob_tracker_mir" output="screen" ></node>
+
+    <!-- Bag name  -->
+    <!-- <arg name="bag_name" default="PID_velocity_Control=$(arg controller_label)_Kp_x$(arg Kp_x)_Ki_x=$(arg Ki_x)_Kd_x=$(arg Kd_x)_g=$(arg g)_Kp_y$(arg Kp_y)_Ki_y=$(arg Ki_y)_Kd_y=$(arg Kd_y)_Kp_psi$(arg Kp_psi)_Ki_psi=$(arg Ki_psi)_Kd_psi=$(arg Kd_psi)"/> -->
+    
+    <node name="bag_record" pkg="rosbag" type="record" args="record -o $(find autonomous_rov)/bags/pid_velocity_bags/MMecha_.bag /$(arg ns)/depth/state /$(arg ns)/mavros/imu/data /$(arg ns)/distance_sonar /$(arg ns)/mavros/rc/override /$(arg ns)/linear_velocity /$(arg ns)/angular_velocity /$(arg ns)/angle_degree /$(arg ns)/do/thing /$(arg ns)/visual_servoing_error /$(arg ns)/visual_servoing_velocity">
+       </node>
+    </group>
+
+</launch>
+
+
+
+
