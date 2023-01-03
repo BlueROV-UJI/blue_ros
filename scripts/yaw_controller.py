@@ -93,10 +93,10 @@ class YawController:
         # Control:
         self.controller.set_step(dt)
         control_effort = -self.controller.control(e_yaw, r)
-        # print(f"desired_yaw = {self.desired_val}")
-        # print(f"yaw = {yaw}")
-        # print(f"err = {e_yaw}")
-        # print(f"yaw_control_effort = {control_effort}")
+        print(f"desired_yaw = {self.desired_val}")
+        print(f"yaw = {yaw}")
+        print(f"err = {e_yaw}")
+        print(f"yaw_control_effort = {control_effort}")
         msg = Float64MultiArray()
         msg.data = [control_effort, yaw]
         self.pub.publish(msg)

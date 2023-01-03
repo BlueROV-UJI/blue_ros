@@ -5,7 +5,6 @@ from std_msgs.msg import Int16
 from std_msgs.msg import Float64
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
-from waterlinked_a50_ros_driver.msg import DVL
 from alpha_beta_gamma_filter import alpha_beta_gamma_filter
 from std_msgs.msg import Float64MultiArray
 import tf
@@ -38,8 +37,8 @@ class SwayController:
         self.get_params()
         self.set_controller()
         
-        self.sensor_sub = rospy.Subscriber(
-            "/dvl/data", DVL, self.sensor_callback)
+        # self.sensor_sub = rospy.Subscriber(
+        #     "/dvl/data", DVL, self.sensor_callback)
         self.reset_sub = rospy.Subscriber(
             "controllers/reset", Empty, self.reset_callback)
         self.desired_val_sub = rospy.Subscriber(
