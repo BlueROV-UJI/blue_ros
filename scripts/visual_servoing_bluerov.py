@@ -28,7 +28,7 @@ class ArucoServoing:
         self.kp = 0.0001
         self.error_x_prev = 0
         self.error_y_prev = 0
-        self.compressed_flag = True
+        self.compressed_flag = False
 
         #Camera parameters
         # 813.124, 830.767, 585.5, 265
@@ -38,42 +38,25 @@ class ArucoServoing:
         self.first_goal = True
         self.end_goal_reached = False
 
-        rospy.Subscriber("/blue_rov1/CompressedImage", CompressedImage, self.image_callback)
-        self.cmd_vel_publisher = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
-        #74
-        middle_left_goal = np.array([[[122., 207.],
-        [169., 207.],
-        [169., 253.],
-        [122., 253.]]])
-        #75
-        middle_right_goal = np.array([[[481., 207.],
-        [527., 207.],
-        [527., 253.],
-        [481., 253.]]])
-        #76
-        upper_left_goal = np.array([[[480.,  20.],
-        [527.,  20.],
-        [527.,  67.],
-        [481.,  67.]]])
-        #77
-        upper_right_goal = np.array([[[122.,  20.],
-        [169.,  20.],
-        [169.,  67.],
-        [122.,  67.]]])
-        #100
-        center_goal = np.array([[[248., 202.],
-        [310., 202.],
-        [310., 264.],
-        [248., 264.]]])
-        self.goals_dict = {'74' : middle_left_goal,
-                           '75' : middle_right_goal,
-                           '76' : upper_left_goal,
-                           '77' : upper_right_goal,
-                           '100': center_goal}
+        # rospy.Subscriber("/camera0/image_raw/compressed", CompressedImage, self.image_callback)
+        rospy.Subscriber("/camera0/image_raw", Image, self.image_callback)
+        self.cmd_vel_publisher = rospy.Publisher("/aruco_control", Twist, queue_size=10)
+
+        #200
+        upper_goal = np.array([[[190., 148.],
+        [147., 151.],
+        [143., 109.],
+        [184., 104.]]])
+        #70
+        lower_goal = np.array([[[184., 89.],
+        [142., 94.],
+        [139., 54.],
+        [180., 47.]]])
+        self.goals_dict = {'70' : lower_goal,
+                            '200': upper_goal}
         self.current_goal = None
 
     def detect_marker(self, image):
-        # detected_markers_dict = {k:None for k in self.goals_dict.keys()}
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         parameters = aruco.DetectorParameters_create()
         all_arucos_corners, ids, _ = aruco.detectMarkers(gray, self.aruco_dict, parameters=parameters)
@@ -99,10 +82,10 @@ class ArucoServoing:
         self.quat = self.transform.rodrigues_to_quaternion(rvec)
         self.transformed_matrix = self.transform.transform_position(tvec, self.quat, as_quat=True)
 
-        cv2.imshow("image", image)
-        cv2.waitKey(3)
+        # cv2.imshow("image", image)
+        # cv2.waitKey(3)
         cv2.imshow("frame_markers", frame_markers)
-        cv2.waitKey(3)
+        cv2.waitKey(1)
 
         aruco_centers = []
         for corner in [single_aruco_corners]:
@@ -111,11 +94,10 @@ class ArucoServoing:
             for point in corner:
                 mid[0] = (point[0][0] + point[2][0]) / 2
                 mid[1] = (point[0][1] + point[2][1]) / 2
-            # print("mid = {}".format(mid))
             aruco_centers.append(mid)
             cv2.circle(frame_markers, (int(mid[0]), int(mid[1])), 5, (0, 0, 255), -1) #-1 means filled circle
         cv2.imshow("frame_markers", frame_markers)
-        cv2.waitKey(3)
+        cv2.waitKey(1)
         return frame_markers, aruco_centers, single_aruco_corners, aruco_key_found, detected_markers_dict
 
     def image_callback(self, image_msg):
@@ -137,70 +119,17 @@ class ArucoServoing:
         cv2.waitKey(3)
         frame_markers, aruco_centers, aruco_corners, aruco_key_found, detected_markers_dict = self.detect_marker(cv_image)
         print("aruco_key_found={}".format(aruco_key_found))
-        # print("aruco_corners = {}".format(aruco_corners))
-        # print("aruco_centers = {}".format(aruco_centers))
-        #Check if aruco is detected:
-        print("self.first_goal = {}".format(self.first_goal))
-        print("self.end_goal_reached = {}".format(self.end_goal_reached))
         if aruco_corners is None:
             self.cmd_vel_publisher.publish(Twist(Vector3(0, 0, 0), Vector3(0, 0, 0)))
             return
         else:
-            # if (len(detected_markers_dict) > 1) and (self.first_goal):
-            search_for_goal = False
-            #Pursuing the first goal:
-            if self.end_goal_reached == True:
-                for k,v in detected_markers_dict.items():
-                    if k!="100":
-                        self.first_goal = True
-                        self.lambda_vs = 0.04
-                        self.end_goal_reached = False
-            if self.first_goal == True:
-                for k,v in detected_markers_dict.items():
-                    if k!="100":
-                        goal_points = self.goals_dict[k].flatten()
-                        current_points = np.array(v).flatten()
-                        search_for_goal = True
-                if search_for_goal == False:
-                    vel_x, vel_y, vel_z = 0, 0, 0
-                    self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
-                    return #Safety
-            #Pursuing the ultimate goal:
-            else:
-                if "100" not in detected_markers_dict.keys():
-                    vel_x, vel_y, vel_z = 0, 0, 0
-                    self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
-                    return #Safety
-                goal_points = self.goals_dict["100"].flatten()
-                current_points = detected_markers_dict["100"].flatten()
-
-            print("current_points = {}".format(current_points))
-            print("current_points_shape = {}".format(current_points.shape))
-            print("goal_points = {}".format(goal_points))
-            print("goal_points_shape = {}".format(goal_points.shape))
-            # exit()
-            
+            for k,v in detected_markers_dict.items():
+                goal_points = self.goals_dict[k].flatten()
+                current_points = np.array(v).flatten()
             velocity = self.velocity_controller(current_points, goal_points)
-            vel_x, vel_y, vel_z, vel_roll, vel_pitch, vel_yaw = velocity[0], velocity[1], velocity[2], velocity[3], velocity[4], velocity[5]
-            # vel_x, vel_y, vel_z = 0, 0, 0
-            #To avoid oscillations and weird behaviors:
-            if (((np.abs(self.error_vs[0]) < 0.03) and (np.abs(self.error_vs[1]) < 0.03) and (np.abs(self.error_vs[2]) < 0.03)) and not (self.first_goal)):
-                self.end_goal_reached = True
-            if (((np.abs(self.error_vs[0]) > 0.03) or (np.abs(self.error_vs[1]) > 0.03) or (np.abs(self.error_vs[2]) > 0.03)) and self.first_goal):
-                # vel_x = 0
-                pass
-            else:
-                #Now first goal is reached and aruco marker = 100 will be pursued
-                self.first_goal = False
-                self.lambda_vs = 0.03
-                
-                # vel_x = 0
-            # if (((np.abs(self.error_vs[0]) < 0.03) and (np.abs(self.error_vs[1]) < 0.03) and (np.abs(self.error_vs[2]) < 0.03)) and not (self.first_goal)):
-            #     self.end_goal_reached = True
-            
-            
-            self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
-
+            self.cmd_vel_publisher.publish(Twist(Vector3(velocity[0], velocity[1], velocity[2]), Vector3(velocity[3], velocity[4], velocity[5])))
+            # vel_x, vel_y, vel_z, vel_roll, vel_pitch, vel_yaw = velocity[0], velocity[1], velocity[2], velocity[3], velocity[4], velocity[5]
+        return
 
     def velocity_controller(self, current_points, desired_points_vs):
         current_points_meter = self.cam.convertListPoint2meter(current_points)
@@ -213,9 +142,6 @@ class ArucoServoing:
 
         #compute interaction matrix in the FILE ./visual_servoig.py
         L = ut.interactionMatrixFeaturePoint2DList(current_points_meter)
-        # TODO once it works with this matrix, change it for
-        # 1. a rho tetha representation
-        # 2. a segment representation
 
         #init the camera velocity
         vcam = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -224,15 +150,14 @@ class ArucoServoing:
         vrobot = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         
 
-        ## TODO find the control velocity expressed in the robot frame
-        cam_to_rob_t = np.array([0, 0, 0])
+        ##find the control velocity expressed in the robot frame
+        cam_to_rob_t = np.array([0.15, 0, 0])
         #Unity rotation matrix from camera to robot
-        cam_to_rob_r = np.array([[0, 0, -1],
-                                    [0, -1, 0],
-                                    [-1, 0, 0]])
+        cam_to_rob_r = np.array([[0, 0, 1],
+                                    [1, 0, 0],
+                                    [0, 1, 0]])
         twist_matrix = self.transform.velocityTwistMatrix(cam_to_rob_t[0], cam_to_rob_t[1], cam_to_rob_t[2],
                                             aRb=cam_to_rob_r)
-        #print("pretty_boy_twist  = ", twist_matrix)
         vrobot = twist_matrix.dot(vcam_vs)
         print("vrobot = {}".format(vrobot))
         return vrobot

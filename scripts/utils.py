@@ -3,8 +3,6 @@ import numpy as np
     
 
         
-#TODO Add others interactionMatrices
-
 # the interactionMatrix for a point with rho theta representation
 def interactionMatrixFeaturePointRhoTheta(rho,theta):
     L = np.zeros(2,6)
@@ -43,3 +41,5 @@ def interactionMatrixFeaturePoint2DList(points, Zs=None):
             L = np.concatenate((L,Lp))
         iter += 1
     return L
+
+

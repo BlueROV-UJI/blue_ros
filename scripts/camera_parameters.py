@@ -2,13 +2,7 @@
 import numpy as np
 
 
-class CameraParameters:
-    u0 = 341
-    v0 = 258
-    lx = 455
-    ly = 455
-    kud =0.00683 
-    kdu = -0.01424   
+class CameraParameters: 
     def __init__(self):
         u0 = 341
         v0 = 258
