@@ -88,7 +88,6 @@ class ArucoServoing:
                 cv_image = self.bridge.imgmsg_to_cv2(image_msg, "passthrough")
             except CvBridgeError as e:
                 rospy.logerr("CvBridge Error: {0}".format(e))
-        
         self.image_height = cv_image.shape[0]
         self.image_width = cv_image.shape[1]
         frame_markers, aruco_centers, aruco_corners = self.detect_marker(cv_image)
@@ -107,7 +106,7 @@ class ArucoServoing:
             # exit()
             velocity = self.velocity_controller(current_points, goal_points)
             vel_x, vel_y, vel_z, vel_roll, vel_pitch, vel_yaw = velocity[0], velocity[1], velocity[2], velocity[3], velocity[4], velocity[5]
-            vel_x, vel_y, vel_z = 0, 0, 0
+            # vel_x, vel_y, vel_z = 0, 0, 0
             self.cmd_vel_publisher.publish(Twist(Vector3(float(vel_x), float(-vel_z), float(-vel_y)), Vector3(0, 0, 0)))
 
 
