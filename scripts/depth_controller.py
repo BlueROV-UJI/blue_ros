@@ -6,7 +6,7 @@ from std_msgs.msg import Float64
 from std_msgs.msg import Float64MultiArray
 from std_msgs.msg import Empty
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import FluidPressure
+from mavros_msgs.msg import VFR_HUD
 import tf
 import math
 
@@ -41,7 +41,7 @@ class DepthController:
         self.set_controller()
         
         self.sensor_sub = rospy.Subscriber(
-            "mavros/imu/water_pressure", FluidPressure, self.sensor_callback)
+            "/mavros/vfr_hud", VFR_HUD, self.sensor_callback)
         self.reset_sub = rospy.Subscriber(
             "controllers/reset", Empty, self.reset_callback)
         self.desired_val_sub = rospy.Subscriber(
@@ -68,14 +68,15 @@ class DepthController:
 
     def sensor_callback(self, data):
         # get data
-        pressure = data.fluid_pressure
+        # pressure = data.fluid_pressure
         
         # update dt
         curr_time = rospy.Time.now().to_sec()
         dt = curr_time - self.prev_time
         self.prev_time = curr_time
         
-        depth = (pressure - 101300)/(self.rho * self.gravity)
+        # depth = (pressure - 101300)/(self.rho * self.gravity)
+        depth = data.altitude
         
         if (self.init):
             # 1st execution, init
