@@ -9,7 +9,6 @@ https://youtu.be/v4bm29MwCQ8 : Visual Servoing using Unity -  Docking Station
 # Scripts:
 
 Multi-aruco file - Unity:
-Files
 ```
 scripts/visual_servoing_unity_multi_aruco.py
 ```
