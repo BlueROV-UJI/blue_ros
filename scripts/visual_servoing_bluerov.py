@@ -34,7 +34,7 @@ class ArucoServoing:
         # 813.124, 830.767, 585.5, 265
         self.camera_matrix = np.array([[813.124, 0, 320],[0,830.767, 224],[0,0,1]])
         self.dist_coeffs = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        self.lambda_vs = 0.04 #Kp for visual servoing
+        self.lambda_vs = 0.5 #0.04 #Kp for visual servoing
         self.first_goal = True
         self.end_goal_reached = False
 
