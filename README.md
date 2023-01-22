@@ -3,8 +3,7 @@
 
 
 # YouTube Videos:
-https://youtu.be/v4bm29MwCQ8 : Visual Servoing using Unity -  Docking Station
-
+[![Visual Servoing using Unity -  Docking Station](https://youtu.be/v4bm29MwCQ8)] 
 https://youtu.be/9NN9q6Jwiwo : Visual Servoing at CIRTESU
 
 
